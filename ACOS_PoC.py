@@ -2,7 +2,7 @@
 
 '''
 Summary:
-    This script will generate an initial
+    This script will generate an initial configuration based on the data input into the A10_PoC_Data.xls(m) spreadsheet.
 
 Requires:
     - Python 3.x
