@@ -1,0 +1,264 @@
+"/Applications/Python 3.6/IDLE.app/Contents/MacOS/Python" /Users/tejones/PycharmProjects/A10-PoC-Automation/ACOS_PoC.py
+
+
+PoC script started at: 2018-03-17 17:06:15.807001
+
+
+
+A10 ACOS configuration builder
+
+!*****************************************************************
+! Configuration per device. Enable vcs clustering after entering
+! these commands (ie: vcs reload).
+!*****************************************************************
+
+! ***FOR DEVICE 1***
+!
+vrrp-a common
+	device-id 1
+	set-id 1
+	enable
+!
+! ***END DEVICE 1***
+!
+! ***FOR DEVICE 2***
+!
+vrrp-a common
+	device-id 2
+	set-id 1
+	enable
+!
+! ***END DEVICE 2***
+!
+! ***FOR DEVICE 1***
+!
+vcs enable
+!
+vcs device 1
+	priority 195
+	interface management
+	affinity-vrrp-a-vrid 0
+	enable
+!
+vcs ssl-enable
+!
+vcs multicast-ip 224.0.0.11 
+!
+vcs floating-ip 192.168.0.151 
+!
+! ***FOR DEVICE 2***
+!
+vcs enable
+!
+vcs device 2
+	priority 175
+	interface management
+	affinity-vrrp-a-vrid 0
+	enable
+!
+vcs ssl-enable
+!
+vcs multicast-ip 224.0.0.11 
+!
+vcs floating-ip 192.168.0.151 
+!
+!*****************************************************************
+!** Common Configuration to be used once devices are clustered. **
+!*****************************************************************
+
+!
+vrrp-a vrid 0
+	floating-ip 172.31.6.1
+	device-context 1
+		blade-parameters
+			priority 195
+	device-context 2
+		blade-parameters
+			priority 175
+!
+!
+device-context 2
+!
+hostname vThunder_ADC_02
+!
+device-context 1
+!
+hostname vThunder_ADC_01
+!
+banner exec "exec_banner_text"
+!
+banner login "login_banner_text"
+!
+web-service login-message "WEB LOGIN-MESSAGE\r\n\r\nWelcome to ACOS v4.1.4!!\r\n\r\nThis is property of XXXX"
+!
+multi-config enable
+!
+ip dns primary 192.168.0.8
+!
+ip dns secondary 192.168.0.5
+!
+ip dns suffix domain.com
+!
+ntp server ntp.google.com
+	prefer
+!
+ntp server ntp.time.gov
+!
+!
+interface ethernet 1/9
+	name "connected to br7"
+	enable
+!
+interface ethernet 2/9
+	name "connected to br7"
+	enable
+!
+vlan 1/28
+	untaggged ethernet 9
+	router-interface ve 28
+!
+vlan 2/28
+	untaggged ethernet 9
+	router-interface ve 28
+!
+interface ve 1/28
+	ip address 172.31.6.2 /24
+!
+interface ve 2/28
+	ip address 172.31.6.3 /24
+!
+device-context 2
+!
+ip route 0.0.0.0 /0 172.31.6.254
+!
+device-context 1
+!
+ip route 0.0.0.0 /0 172.31.6.254
+!
+!
+logging host 192.168.0.182 port 514 tcp
+!
+logging syslog warning
+!
+logging trap error
+!
+logging console error 
+!
+!
+ip nat pool snat_172_31_6_10 172.31.6.10 172.31.6.11 netmask /24
+!
+ip nat pool snat_172_31_6_10 172.31.6.10 172.31.6.11 netmask /24
+!
+ip nat pool snat_172_31_6_14 172.31.6.14 172.31.6.14 netmask 255.255.255.0
+!
+slb template http redirect_to_https
+	redirect port 443 response-code 301
+!
+slb template client-ssl ssl_vip04_cert
+	cert ssl_vip04_cert
+	key ssl_vip04_cert
+	disable-sslv3
+	enable-tls-alert-logging fatal
+!
+slb template client-ssl ssl_vip05_cert
+	cert ssl_vip05_cert
+	key ssl_vip05_cert
+	disable-sslv3
+	enable-tls-alert-logging fatal
+!
+slb common
+	extended-stats
+	drop-icmp-to-vip-when-vip-down
+!
+!
+slb server mint01 10.1.30.1
+	port 80 tcp
+	port 443 tcp
+	port 22 tcp
+	port 3389 tcp
+	port 8080 tcp
+	port 8081 tcp
+!
+slb server mint02 10.1.30.2
+	port 80 tcp
+	port 443 tcp
+	port 22 tcp
+	port 3389 tcp
+	port 8080 tcp
+!
+slb server mint03 10.1.31.1
+	port 80 tcp
+	port 443 tcp
+	port 22 tcp
+!
+slb server mint04 10.1.31.2
+	port 8080 tcp
+	port 8081 tcp
+!
+slb server new-server 10.1.32.1
+	port 80 tcp
+	port 443 tcp
+	port 8443 tcp
+	port 7443 tcp
+!
+slb service-group sg_web_01_80 tcp
+	method least connection
+	member mint01 80 
+	member mint02 80
+!
+slb service-group sg_web_01_443 tcp
+	method round robin
+	member mint01 443 
+	member mint02 443
+!
+slb service-group sg_web_03_8080 tcp
+	method least connection
+	member mint03 8080 
+	member mint04 8080
+!
+slb service-group sg_web_04_8080 tcp
+	method least connection
+	member mint04 8080 
+	member mint03 8080
+!
+slb service-group sg_web_05_7443 tcp
+	method least connection
+	member new-server 7443 
+	member mint04 7443
+!
+slb virtual-server vip_web_01 172.31.6.100 /32
+	port 80 http
+		service-group sg_web_01_80
+		source-nat pool snat_172_31_6_10
+		template http redirect_to_https
+!
+slb virtual-server vip_web_01 172.31.6.100 /32
+	port 443 tcp 
+		service-group sg_web_01_443
+		source-nat pool snat_172_31_6_10
+!
+slb virtual-server vip_web_03 172.31.6.103 /32
+	port 80 http
+		service-group sg_web_03_8080
+		source-nat auto
+		template http redirect_to_https
+!
+slb virtual-server vip_web_04 172.31.6.104 /32
+	port 443 https
+		service-group sg_web_04_8080
+		source-nat auto
+		template client-ssl ssl_vip04_cert
+!
+slb virtual-server vip_web_05 172.31.6.105 /32
+	port 443 https
+		service-group sg_web_05_7443
+		source-nat pool snat_172_31_6_14
+		template client-ssl ssl_vip05_cert
+!
+
+
+PoC script ended at: 2018-03-17 17:06:16.277383
+
+
+
+Process finished with exit code 0

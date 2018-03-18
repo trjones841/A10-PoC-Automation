@@ -50,15 +50,29 @@ def main():
     # set the default logging format
     logging.basicConfig(format="%(name)s: %(levelname)s: %(message)s")
 
-    start = datetime.datetime.now()
+    print('\n\nPoC script started at: ' + str(datetime.datetime.now()) + '\n\n')
 
-    print('\n\nPoC script started at: ' + str(start) + '\n\n')
-    get_config_data.get_http_templates()
-    get_config_data.get_client_ssl_templates()
-    get_config_data.get_slb_servers()
-    get_config_data.get_slb_service_groups()
-    get_config_data.get_slb_virtual_servers()
-    print('\n\nPoC script ended at: ' + str(start) + '\n\n')
+    print('\nA10 ACOS configuration builder\n')
+    print('!*****************************************************************')
+    print('! Configuration per device. Enable vcs clustering after entering')
+    print('! these commands (ie: vcs reload).')
+    print('!*****************************************************************\n')
+    get_config_data.create_vrrpa_commmon_config()
+    get_config_data.create_vcs_config()
+    print('!*****************************************************************')
+    print('!** Common Configuration to be used once devices are clustered. **')
+    print('!*****************************************************************\n')
+    get_config_data.create_vrrpa_config()
+    get_config_data.create_base_system_config()
+    get_config_data.create_interface_vlan_routes()
+    get_config_data.create_logging_config()
+    get_config_data.create_snat_pools()
+    get_config_data.create_http_templates()
+    get_config_data.create_client_ssl_templates()
+    get_config_data.create_slb_servers()
+    get_config_data.create_slb_service_groups()
+    get_config_data.create_slb_virtual_servers()
+    print('\n\nPoC script ended at: ' + str(datetime.datetime.now()) + '\n\n')
     return True
 
 if __name__ == "__main__":

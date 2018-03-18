@@ -8,3 +8,7 @@ venv/
 A10_PoC_Data\.xlsx
 
 A10_PoC_Data\.csv
+
+*.pyc
+
+scratch_file\.py
