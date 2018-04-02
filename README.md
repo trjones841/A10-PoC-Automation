@@ -10,5 +10,5 @@ Usage:
 
 1. Ensure the A10_PoC_Data.xlsm (or A10_PoC_Data.xls) are completed with all rows updated.
 2. Run the configuration generator script by running: python3 ACOS_PoC.py
-   (Note: configuration will be written to the console windows, just echo output to fill if preferred.)
+   (Note: configuration will be written to the console windows, just echo output to file if preferred.)
    
