@@ -5,7 +5,7 @@ import re
 
 
 def create_vrrpa_commmon_config():
-    server_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='VCS_VRRPA')
+    server_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='VCS_VRRPA')
     print('! ***FOR DEVICE 1***')
     print('!\nvrrp-a common')
     print('\tdevice-id 1')
@@ -21,7 +21,7 @@ def create_vrrpa_commmon_config():
     return True
 
 def create_vrrpa_config():
-    vrrpa_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Vlan_Interfaces')
+    vrrpa_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Vlan_Interfaces')
     print('!\nvrrp-a vrid 0')
     print('\tfloating-ip', vrrpa_data['floating-ip'][0] )
     print('\tdevice-context 1')
@@ -33,7 +33,7 @@ def create_vrrpa_config():
     return True
 
 def create_vcs_config():
-    vcs_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='VCS_VRRPA')
+    vcs_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='VCS_VRRPA')
     if vcs_data['VCS State'][0] == 'Enabled':
         print('! ***FOR DEVICE 1***')
         print('!\nvcs enable')
@@ -65,8 +65,8 @@ def create_vcs_config():
 
 
 def create_base_system_config():
-    system_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='System Vars')
-    vcs_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='VCS_VRRPA')
+    system_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='System Vars')
+    vcs_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='VCS_VRRPA')
     if vcs_data['VCS State'][0] == 'Enabled':
         print('!\ndevice-context 2')
         print('!\nhostname', str(system_data['Hostname'][0])+'_02')
@@ -89,8 +89,8 @@ def create_base_system_config():
     return True
 
 def create_interface_vlan_routes():
-    ivr_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Vlan_Interfaces')
-    vcs_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='VCS_VRRPA')
+    ivr_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Vlan_Interfaces')
+    vcs_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='VCS_VRRPA')
     if vcs_data['VCS State'][0] == 'Enabled':
         for index, row in ivr_data.iterrows():
             print('!\ninterface ethernet 1/' + str(ivr_data['interface'][0]))
@@ -150,7 +150,7 @@ def create_logging_config():
     !
     logging email-address user.name@domain.com
     '''
-    log_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Logging')
+    log_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Logging')
 
     if ['use-mgmt-port'] == 'YES':
         print('!\nlogging host', log_data['syslog host'][0], 'use-mgmt-port port', log_data['syslog port'][0],
@@ -169,7 +169,7 @@ def create_http_templates():
 
 
 def create_client_ssl_templates():
-    client_ssl = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Virtual-Servers')
+    client_ssl = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Virtual-Servers')
     for index, row in client_ssl.iterrows():
         if str(row['SSL Cert Name']) != ('' or 'nan'):
             print('!\nslb template client-ssl',row['SSL Cert Name'])
@@ -185,19 +185,23 @@ def create_slb_servers():
     print('\textended-stats')
     print('\tdrop-icmp-to-vip-when-vip-down')
     print('!')
-    slb_servers = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Servers')
-    slb_servers = slb_servers[['Server','Server_IP','TCP Listner Ports', 'UDP Listner Ports']]
+    slb_servers = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Servers')
+    slb_servers = slb_servers[['Server','Server_IP','TCP Listener Ports', 'UDP Listener Ports']]
     for index, row in slb_servers.iterrows():
         print('!\nslb server', row['Server'], row['Server_IP'])
-        tcp_port_list = row['TCP Listner Ports'].split(',')
-        tcp_port_list = [x.strip(' ')for x in tcp_port_list]
-        for port in tcp_port_list:
-            print('\tport', port, 'tcp')
+        if ',' not in str(row['TCP Listener Ports']):
+            tcp_port_list = row['TCP Listener Ports']
+            print('\tport', tcp_port_list, 'tcp')
+        else:
+            tcp_port_list = row['TCP Listener Ports'].split(',')
+            tcp_port_list = [x.strip(' ')for x in tcp_port_list]
+            for port in tcp_port_list:
+                print('\tport', port, 'tcp')
     return True
 
 
 def create_slb_service_groups():
-    slb_service_groups = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Virtual-Servers')
+    slb_service_groups = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Virtual-Servers')
     slb_service_groups = slb_service_groups[['virtual_server_name', 'slb_server_name', 'slb_server_port', 'add_slb_server',
                                    'protocol', 'load_balance_method']]
     for index, row in slb_service_groups.iterrows():
@@ -211,7 +215,7 @@ def create_slb_service_groups():
 
 
 def create_snat_pools():
-    snat_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Virtual-Servers')
+    snat_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Virtual-Servers')
     for item, row in snat_data.iterrows():
         if str(row['source-nat name']) != 'nan':
             print('!\nip nat pool', row['source-nat name'], row['source-nat IP (top)'], row['source-nat IP (bottom)'],
@@ -220,7 +224,7 @@ def create_snat_pools():
 
 
 def create_slb_virtual_servers():
-    vip_data = pd.read_excel('A10_PoC_Data.xlsm', header=[0], sheet_name='Virtual-Servers')
+    vip_data = pd.read_excel('SmartDraw_PoC_Data.xlsx', header=[0], sheet_name='Virtual-Servers')
     for item, row in vip_data.iterrows():
         print('!\nslb virtual-server', row['virtual_server_name'], row['virtual_server_ip'], '/32')
         print('\tport', row['vport'], row['vport type'])
